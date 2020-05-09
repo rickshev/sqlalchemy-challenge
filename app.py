@@ -1,29 +1,28 @@
-from matplotlib import style
-import matplotlib.pyplot as plt
+# import dependencies
 import numpy as np
-import pandas as pd
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func, inspect
-import datetime as dt
 from flask import Flask, jsonify
 
-
-engine = create_engine("sqlite:///Resources/hawaii.sqlite", connect_args={'check_same_thread': False})
-
+# connect to database with automap
+engine = create_engine("sqlite:///Resources/hawaii.sqlite")
 Base = automap_base()
 Base.prepare(engine, reflect=True)
 Base.classes.keys()
 
+# assign variable names to tables
 measurement = Base.classes.measurement
 station = Base.classes.station
 
+# create session
 session = Session(engine)
 
 # flask app
 app = Flask(__name__)
 
+# home page that shows routes
 @app.route("/")
 def home():
     return(
@@ -35,6 +34,7 @@ def home():
         f"/api/v1.0/<start_date>/<end_date></br>"
     )
 
+# precipitation route displaying last year of precipitation data
 @app.route("/api/v1.0/precipitation")
 def precipitation():
     results_prec = session.query(measurement.date, measurement.prcp).filter(measurement.date >= "2016-08-23").all()
@@ -43,6 +43,7 @@ def precipitation():
     
     return jsonify(precip_list)
 
+# stations route
 @app.route("/api/v1.0/stations")
 def stations():
     results_stat = session.query(station.name).all()
@@ -51,6 +52,7 @@ def stations():
 
     return jsonify(station_list)
 
+# temperature route
 @app.route("/api/v1.0/tobs")
 def tobs():
     active_station_list = session.query(measurement.station, func.count(measurement.station)).\
@@ -68,6 +70,7 @@ def tobs():
 
     return jsonify(temp_list)
 
+# start date route displaying temperatures
 @app.route("/api/v1.0/<start_date>")
 def start(start_date):
     results_date = session.query(measurement.date, func.min(measurement.tobs), func.max(measurement.tobs), func.avg(measurement.tobs)).\
@@ -85,6 +88,7 @@ def start(start_date):
     
     return jsonify(date_dict)
 
+# start/end date route displaying all temperatures from start date to end date
 @app.route("/api/v1.0/<start_date>/<end_date>")
 def startend(start_date, end_date):
     results_date_2 = session.query(measurement.date, func.min(measurement.tobs, func.max(measurement.tobs), func.avg(measurement.tobs)).\
